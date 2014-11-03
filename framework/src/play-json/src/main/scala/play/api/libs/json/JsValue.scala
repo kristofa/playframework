@@ -3,16 +3,17 @@
  */
 package play.api.libs.json
 
+import java.io.InputStream
+import scala.annotation.tailrec
+import scala.collection._
+import scala.collection.mutable.ListBuffer
+
 import com.fasterxml.jackson.core.{ JsonGenerator, JsonToken, JsonParser }
 import com.fasterxml.jackson.databind._
 import com.fasterxml.jackson.databind.`type`.TypeFactory
 import com.fasterxml.jackson.databind.deser.Deserializers
 import com.fasterxml.jackson.databind.ser.Serializers
 
-import scala.collection._
-import scala.collection.mutable.ListBuffer
-
-import scala.annotation.tailrec
 import play.api.data.validation.ValidationError
 
 case class JsResultException(errors: Seq[(JsPath, Seq[ValidationError])]) extends RuntimeException("JsResultException(errors:%s)".format(errors))
@@ -478,12 +479,18 @@ private[json] object JacksonJson {
 
   private[this] def jsonParser(data: Array[Byte]): JsonParser = jsonFactory.createParser(data)
 
+  private[this] def jsonParser(stream: InputStream): JsonParser = jsonFactory.createParser(stream)
+
   def parseJsValue(data: Array[Byte]): JsValue = {
     mapper.readValue(jsonParser(data), classOf[JsValue])
   }
 
   def parseJsValue(input: String): JsValue = {
     mapper.readValue(jsonParser(input), classOf[JsValue])
+  }
+
+  def parseJsValue(stream: InputStream): JsValue = {
+    mapper.readValue(jsonParser(stream), classOf[JsValue])
   }
 
   def generateFromJsValue(jsValue: JsValue, escapeNonASCII: Boolean = false): String = {
